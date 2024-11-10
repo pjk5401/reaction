@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>반응속도 테스트</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select, button {
+            font-size: 16px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            outline: none;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        select:focus, button:focus {
+            border-color: #888;
+        }
+        button {
+            background-color: #5a9;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4b8;
+        }
+        .stats-button {
+            background-color: #7a5;
+            color: white;
+        }
+        .stats-button:hover {
+            background-color: #6a4;
+        }
+        /* 숨김 클래스 */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>반응속도 테스트</h1>
+        <form action="{{ url_for('test_stage', stage=1) }}" method="post">
+            <label for="gender">성별 (필수):</label>
+            <select name="gender" id="gender" required>
+                <option value="male">남자</option>
+                <option value="female">여자</option>
+            </select>
+            
+            <label for="age">나이 (필수):</label>
+            <select name="age" id="age" required>
+                <option value="20~24" selected>20~24</option>
+                <option value="25~29">25~29</option>
+                <option value="30~34">30~34</option>
+                <option value="35~39">35~39</option>
+                <option value="40~">40~</option>
+            </select>
+            
+            <label for="game">게임 (선택):</label>
+            <select name="game" id="game" onchange="updateRankOptions()">
+                <option value="">--</option>
+                <option value="lol">리그 오브 레전드</option>
+                <option value="pubg">배틀그라운드</option>
+                <option value="overwatch">오버워치</option>
+                <option value="etc">기타 게임</option>
+            </select>
+            
+            <!-- 랭크 선택창 -->
+            <div id="rankContainer" class="hidden">
+                <label for="rank">랭크:</label>
+                <select name="rank" id="rank">
+                    <!-- 특정 게임 선택 시 JavaScript로 동적으로 옵션이 추가됩니다. -->
+                </select>
+            </div>
+
+            <button type="submit">테스트 시작</button>
+        </form>
+
+        <!-- 통계 페이지로 가기 버튼 -->
+        <form action="{{ url_for('statistics') }}" method="get">
+            <button type="submit" class="stats-button">통계 페이지로 가기</button>
+        </form>
+    </div>
+
+    <script>
+        function updateRankOptions() {
+            const game = document.getElementById("game").value;
+            const rankSelect = document.getElementById("rank");
+            const rankContainer = document.getElementById("rankContainer");
+
+            // 특정 게임을 선택하지 않으면 랭크 선택창 숨김
+            if (game === "") {
+                rankContainer.classList.add("hidden");
+                rankSelect.innerHTML = "";  // 랭크 옵션 초기화
+                return;
+            }
+
+            // 특정 게임 선택 시 랭크 선택창 표시
+            rankContainer.classList.remove("hidden");
+
+            // 기존 옵션 제거
+            rankSelect.innerHTML = "";
+
+            // 게임에 따른 랭크 옵션 설정
+            if (game === "lol") {
+                rankSelect.innerHTML = `
+                    <option value="iron">아이언</option>
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                    <option value="grandmaster">그랜드마스터</option>
+                    <option value="challenger">챌린저</option>
+                `;
+            } else if (game === "pubg") {
+                rankSelect.innerHTML = `
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                `;
+            } else if (game === "overwatch") {
+                rankSelect.innerHTML = `
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                    <option value="grandmaster">그랜드마스터</option>
+                    <option value="top500">탑 500</option>
+                `;
+            } else if (game === "etc") {
+                rankSelect.innerHTML = `
+                    <option value="expert">고수</option>
+                    <option value="intermediate">중수</option>
+                    <option value="beginner">하수</option>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

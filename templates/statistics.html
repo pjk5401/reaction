@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>통계</title>
+    <style>
+        /* 기본 스타일 유지 */
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f2f5f9;
+        }
+
+        .statistics-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1, h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label, select, button {
+            font-size: 14px;
+            margin: 8px;
+            padding: 6px;
+            border-radius: 5px;
+        }
+
+        select:focus, button:focus {
+            border-color: #888;
+        }
+
+        button {
+            background-color: rgb(78, 144, 243);
+            color: white;
+            cursor: pointer;
+            border: 1px solid #ddd;            
+        }
+
+        button:hover {
+            background-color: #4b8;
+        }
+
+        #reactionChart, #rankChart {
+            max-width: 100%;
+            max-height: 400px;
+            margin-top: 20px;
+        }
+
+        .no-data {
+            font-size: 18px;
+            color: gray;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="statistics-container">
+        <h1>통계 페이지</h1>
+
+        <!-- 필터 선택 폼 -->
+        <form id="filterForm" action="{{ url_for('statistics') }}" method="get">
+            <label for="gender">성별:</label>
+            <select name="gender" id="gender">
+                <option value="">전체</option>
+                <option value="male">남자</option>
+                <option value="female">여자</option>
+            </select>
+
+            <label for="age_group">연령대:</label>
+            <select name="age_group" id="age_group">
+                <option value="">전체</option>
+                <option value="20~24">20~24</option>
+                <option value="25~29">25~29</option>
+                <option value="30~34">30~34</option>
+                <option value="35~39">35~39</option>
+                <option value="40~">40대 이상</option>
+            </select>
+
+            <label for="game">게임:</label>
+            <select name="game" id="game" onchange="updateRankOptions()">
+                <option value="">전체</option>
+                <option value="lol">리그 오브 레전드</option>
+                <option value="pubg">배틀그라운드</option>
+                <option value="overwatch">오버워치</option>
+                <option value="etc">기타 게임</option>
+            </select>
+
+            <label for="rank">랭크:</label>
+            <select name="rank" id="rank">
+                <option value="">전체</option>
+            </select>
+
+            <button type="submit">조회</button>
+        </form>
+
+        <!-- 첫 번째 그래프 -->
+        <canvas id="reactionChart"></canvas>
+        <div id="noDataMessage" class="no-data hidden"></div>
+
+        <h2>게임 랭크별 통계 그래프</h2>
+
+        <!-- 두 번째 그래프 -->
+        <form id="rankFilterForm" action="{{ url_for('statistics') }}" method="get">
+            <label for="rankGame">게임:</label>
+            <select name="rankGame" id="rankGame" onchange="loadRankChart()">
+                <option value="lol">리그 오브 레전드</option>
+                <option value="pubg">배틀그라운드</option>
+                <option value="overwatch">오버워치</option>
+                <option value="etc">기타 게임</option>
+            </select>
+        </form>
+
+        <canvas id="rankChart"></canvas>
+        <div id="rankNoDataMessage" class="no-data hidden"></div>
+
+            <!-- 첫 화면으로 가는 버튼 추가 -->
+        <form action="{{ url_for('index') }}" method="get" style="margin-top: 10px;">
+            <button type="submit">처음으로</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script> <!-- 추가된 플러그인 -->
+
+    <script>
+        function updateRankOptions() {
+            const game = document.getElementById("game").value;
+            const rankSelect = document.getElementById("rank");
+            rankSelect.innerHTML = "";
+
+            if (game === "lol") {
+                rankSelect.innerHTML = `
+                    <option value="">전체</option>
+                    <option value="iron">아이언</option>
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                    <option value="grandmaster">그랜드마스터</option>
+                    <option value="challenger">챌린저</option>
+                `;
+            } else if (game === "pubg") {
+                rankSelect.innerHTML = `
+                    <option value="">전체</option>
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                `;
+            } else if (game === "overwatch") {
+                rankSelect.innerHTML = `
+                    <option value="">전체</option>
+                    <option value="bronze">브론즈</option>
+                    <option value="silver">실버</option>
+                    <option value="gold">골드</option>
+                    <option value="platinum">플래티넘</option>
+                    <option value="diamond">다이아몬드</option>
+                    <option value="master">마스터</option>
+                    <option value="grandmaster">그랜드마스터</option>
+                    <option value="top500">탑 500</option>
+                `;
+            } else if (game === "etc") {
+                rankSelect.innerHTML = `
+                    <option value="">전체</option>
+                    <option value="expert">고수</option>
+                    <option value="intermediate">중수</option>
+                    <option value="beginner">하수</option>
+                `;
+            }
+        }
+
+        // 첫 번째 차트를 로드하는 함수
+        function loadReactionChart() {
+            const statisticsData = {{ statistics_data | tojson }};
+            const stages = statisticsData.map(item => item.stage+"단계");
+            const averageReactionTimes = statisticsData.map(item => parseFloat(item.average_reaction_time).toFixed(2));
+
+            if (averageReactionTimes.length === 0 || averageReactionTimes.every(value => value === null)) {
+                document.getElementById('reactionChart').classList.add('hidden');
+                document.getElementById('noDataMessage').classList.remove('hidden');
+            } else {
+                document.getElementById('noDataMessage').classList.add('hidden');
+                document.getElementById('reactionChart').classList.remove('hidden');
+
+                const ctx = document.getElementById('reactionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: stages,
+                        datasets: [{
+                            label: '평균 반응 속도 (초)',
+                            data: averageReactionTimes,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'end',
+                                color: '#333'
+                            }
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: { beginAtZero: true }
+                            }]
+                        }
+                    }
+                });
+            }
+        }
+
+        // 두 번째 차트를 로드하는 함수
+        function loadRankChart() {
+            const rankGame = document.getElementById('rankGame').value;
+            fetch(`/rank_chart_data?game=${rankGame}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = data.map(item => item.rank);
+                    const values = data.map(item => parseFloat(item.average_reaction_time).toFixed(2));
+
+                    const ctx = document.getElementById('rankChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '랭크별 평균 반응 속도 (초)',
+                                data: values,
+                                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                                borderColor: 'rgba(153, 102, 255, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'end',
+                                    color: '#333'
+                                }
+                            },
+                            scales: {
+                                yAxes: [{
+                                    ticks: { beginAtZero: true }
+                                }]
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 페이지 로드 시 차트 자동 로드
+        document.addEventListener('DOMContentLoaded', loadReactionChart);
+        document.addEventListener('DOMContentLoaded', loadRankChart);
+    </script>
+</body>
+</html>

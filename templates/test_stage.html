@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>단계 {{ stage }}</title>
+    <style>
+        /* 카드 스타일 */
+        .card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 70px;
+            height: 70px;
+            font-size: 18px;
+            text-align: center;
+            border: 2px solid #333;
+            margin: 0;
+            cursor: pointer;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .card:hover {
+            background-color: rgb(161, 229, 115);
+        }
+
+        /* 카드 그리드 컨테이너 */
+        .card-grid {
+            display: grid;
+            gap: 3px; /* 카드 간격을 좁게 설정 */
+            justify-content: center;
+            align-content: center;
+            margin: 0 auto;
+            width: fit-content; /* 그리드의 너비를 카드 크기에 맞추어 축소 */
+        }
+
+        /* 단계별 그리드 레이아웃 */
+        .stage-1 { grid-template-columns: repeat(2, 1fr); }
+        .stage-2 { grid-template-columns: repeat(3, 1fr); }
+        .stage-3 { grid-template-columns: repeat(4, 1fr); }
+        .stage-4 { grid-template-columns: repeat(5, 1fr); }
+        .stage-5 { grid-template-columns: repeat(6, 1fr); }
+
+        /* 정답 및 오답 애니메이션 */
+        .correct {
+            background-color: #4CAF50; /* 초록색 */
+        }
+
+        .incorrect {
+            background-color: #f44336; /* 빨간색 */
+        }
+
+        /* 제한 시간 바 스타일 */
+        #timerBar {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        #timerFill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 100%;
+            transition: width linear;
+        }
+    </style>
+    <script>
+        let startTime;
+        const timeLimit = 5; // 제한 시간 (초 단위)
+    
+        window.onload = function() {
+            startTime = new Date().getTime();
+            startTimer();
+        };
+    
+        // 제한 시간 타이머 시작
+        function startTimer() {
+            const timerFill = document.getElementById('timerFill');
+            timerFill.style.transition = `width ${timeLimit}s linear`;
+            timerFill.style.width = '0%';
+    
+            setTimeout(() => {
+                if (!document.getElementById('reaction_time').value) {
+                    document.getElementById('reaction_time').value = timeLimit;
+                    document.getElementById('success').value = false;
+                    document.getElementById('testForm').submit(); // 바로 다음 단계로 이동
+                }
+            }, timeLimit * 1000);
+        }
+    
+        // 카드 클릭 시 반응 시간과 성공 여부를 기록하고 애니메이션 효과 적용
+        function selectCard(selectedWord, cardElement) {
+            const endTime = new Date().getTime();
+            const reactionTime = ((endTime - startTime) / 1000).toFixed(2); // 초 단위
+            const isSuccess = selectedWord === "{{ incorrect_word }}";
+    
+            // 반응 시간과 성공 여부 설정
+            document.getElementById('reaction_time').value = reactionTime;
+            document.getElementById('success').value = isSuccess;
+    
+            // 정답 및 오답에 따른 애니메이션 적용
+            cardElement.classList.add(isSuccess ? 'correct' : 'incorrect');
+    
+            // 짧은 지연 후 폼 제출
+            setTimeout(() => {
+                document.getElementById('testForm').submit();
+            }, 1000); // 1초 지연
+        }
+    </script>
+</head>
+<body>
+    <h1>단계 {{ stage }} / 5</h1>
+    <div id="timerBar">
+        <div id="timerFill"></div>
+    </div>
+    <p>틀린 단어를 찾아 클릭하세요!</p>
+
+    <!-- 테스트 폼 -->
+    <form id="testForm" action="{{ url_for('test_stage', stage=stage) }}" method="post">
+        <input type="hidden" id="reaction_time" name="reaction_time">
+        <input type="hidden" id="success" name="success">
+
+        <!-- 카드 그리드 컨테이너 -->
+        <div class="card-grid stage-{{ stage }}">
+            {% for word in cards %}
+                <div class="card" onclick="selectCard('{{ word }}', this)">{{ word }}</div>
+            {% endfor %}
+        </div>
+    </form>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>결과</title>
+    <style>
+        /* 표 가운데 정렬 */
+        .result-table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body>
+    <h1>결과</h1>
+    <p>단계별 반응속도와 전체 평균 반응속도를 보여줍니다.</p>
+
+    <!-- 결과 표 -->
+    <table class="result-table" border="1" cellpadding="10" cellspacing="0">
+        <tr>
+            <th>단계</th>
+            <th>내 반응 속도 (초)</th>
+            <th>전체 평균 반응 속도 (초)</th>
+        </tr>
+        {% for stage, reaction_time, success in results %}
+        <tr>
+            <td>{{ stage }}</td>
+            <td>{{ reaction_time if success else "실패" }}</td>
+            <td>{{ overall_average_times[stage] | round(2) if stage in overall_average_times else "-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 버튼들 -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="location.href='{{ url_for('index') }}'">처음 화면으로</button>
+        <button onclick="location.href='{{ url_for('statistics') }}'">통계 보기</button>
+    </div>
+</body>
+</html>
